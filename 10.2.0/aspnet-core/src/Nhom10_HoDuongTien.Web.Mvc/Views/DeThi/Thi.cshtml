@@ -1,0 +1,29 @@
+@{
+    ViewBag.Title = "Làm bài thi";
+    var cauHois = ViewBag.CauHois as List<Nhom10_HoDuongTien.Core.Entities.Toeic.CauHoi>;
+}
+
+<h2>Làm bài thi</h2>
+
+<form method="post" asp-action="NopBai">
+
+    @foreach (var q in cauHois)
+    {
+        <div style="margin-bottom:20px;">
+            <p><strong>Câu @q.SoCauHoi:</strong> @q.NoiDungCauHoi</p>
+
+            @foreach (var lc in q.LuaChons)
+            {
+                <div>
+                    <input type="radio" name="cau_@q.Id" value="@lc.Id" />
+                    @lc.Nhan. @lc.NoiDung
+                </div>
+            }
+
+            <br />
+        </div>
+    }
+
+    <button type="submit">Nộp bài</button>
+
+</form>
