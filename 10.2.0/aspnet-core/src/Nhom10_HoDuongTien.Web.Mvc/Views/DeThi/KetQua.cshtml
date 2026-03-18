@@ -1,3 +1,105 @@
-<h2>Kết quả</h2>
+@{
+    Layout = null;
 
-<p>Điểm của bạn: @ViewBag.Score</p>
+    var score = ViewBag.Score;
+    var total = ViewBag.Total;
+    var percent = total > 0 ? (score * 100) / total : 0;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Kết quả</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #5f2eea, #7b61ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .score {
+            font-size: 50px;
+            color: #5f2eea;
+        }
+
+        .progress {
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            background: #5f2eea;
+            color: white;
+            padding: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .box {
+            padding: 10px;
+            border-radius: 10px;
+            width: 80px;
+        }
+
+        .correct { background: #d4edda; }
+        .wrong { background: #f8d7da; }
+
+        .btn {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 15px;
+            background: #5f2eea;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>🎉 Kết quả</h2>
+
+    <div class="score">@score / @total</div>
+
+    <div class="progress">
+        <div class="progress-bar" style="width:@percent%">
+            @percent%
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="box correct">
+            ✔ @score <br /> Đúng
+        </div>
+
+        <div class="box wrong">
+            ✖ @(total - score) <br /> Sai
+        </div>
+    </div>
+
+    <a href="/DeThi/Thi/@ViewBag.DeThiId" class="btn">Làm lại</a>
+</div>
+
+</body>
+</html>

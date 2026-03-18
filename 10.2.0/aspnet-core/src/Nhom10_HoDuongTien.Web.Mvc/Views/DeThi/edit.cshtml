@@ -1,0 +1,136 @@
+@model Nhom10_HoDuongTien.Core.Entities.Toeic.CauHoi
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Sửa câu hỏi</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #eef2f7;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .answer {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .answer label {
+            flex: 1;
+        }
+
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-back {
+            background: gray;
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .btn-group {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+
+        <h2>✏️ Sửa câu @Model.SoCauHoi</h2>
+
+        <form method="post" action="/DeThi/Edit">
+            @Html.AntiForgeryToken()
+
+            <!-- ID câu hỏi -->
+            <input type="hidden" name="Id" value="@Model.Id" />
+
+            <!-- Nội dung câu hỏi -->
+            <label><b>Nội dung câu hỏi</b></label>
+            <textarea name="NoiDungCauHoi" rows="4">@Model.NoiDungCauHoi</textarea>
+
+            <!-- Danh sách đáp án -->
+            <h4 style="margin-top:20px;">📌 Đáp án</h4>
+
+            @foreach (var lc in Model.LuaChons)
+            {
+                <div class="answer">
+                    <!-- Input sửa đáp án -->
+                    <label>
+                        <b>@lc.Nhan:</b>
+                        <input type="text" name="NoiDung_@lc.Id" value="@lc.NoiDung" />
+                    </label>
+
+                    <!-- Radio chọn đáp án đúng -->
+                    <input type="radio" name="DapAnDung" value="@lc.Id" @(lc.LaDapAnDung ? "checked" : "") /> Đúng
+                </div>
+            }
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-save">💾 Lưu</button>
+                <a href="/DeThi/Upload" class="btn-back">⬅ Quay lại</a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>

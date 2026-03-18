@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 using Abp.AspNetCore.Mvc.Controllers;
-using Nhom10_HoDuongTien.Application.Services.DeThi;
 using Abp.Domain.Repositories;
+using Nhom10_HoDuongTien.Application.Services.DeThi;
 using Nhom10_HoDuongTien.Core.Entities.Toeic;
 
 namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
@@ -19,7 +20,6 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
         private readonly IRepository<CauHoi, int> _cauHoiRepo;
         private readonly IRepository<LuaChon, int> _luaChonRepo;
 
-        
         public DeThiController(
             WordParser parser,
             IRepository<DeThi, int> deThiRepo,
@@ -34,22 +34,31 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
             _luaChonRepo = luaChonRepo;
         }
 
-      
+       
         [HttpGet("Upload")]
         public IActionResult Upload()
         {
+            var cauHois = _cauHoiRepo
+                .GetAllIncluding(c => c.LuaChons)
+                .OrderBy(c => c.SoCauHoi)
+                .ToList();
+
+            ViewBag.CauHois = cauHois;
+
             return View();
         }
 
         [HttpPost("UploadWord")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadWord(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
-                ViewBag.Message = "Chưa chọn file!";
+                ViewBag.Message = "❌ Chưa chọn file!";
                 return View("Upload");
             }
 
+            // Lưu file
             var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
 
             if (!Directory.Exists(folderPath))
@@ -64,10 +73,10 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
                 await file.CopyToAsync(stream);
             }
 
-           
+            // Parse file
             var questions = _parser.Parse(filePath);
 
-           
+            // Tạo đề thi
             var deThi = await _deThiRepo.InsertAsync(new DeThi
             {
                 TieuDe = file.FileName,
@@ -76,7 +85,7 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
 
             await CurrentUnitOfWork.SaveChangesAsync();
 
-           
+            // Tạo phần thi
             var phanThi = await _phanThiRepo.InsertAsync(new PhanThi
             {
                 DeThiId = deThi.Id,
@@ -87,7 +96,7 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
 
             int soCau = 1;
 
-            
+            // Lưu câu hỏi + đáp án
             foreach (var q in questions)
             {
                 var cauHoi = await _cauHoiRepo.InsertAsync(new CauHoi
@@ -113,14 +122,89 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
 
             ViewBag.Message = $"✔ Tạo đề thi thành công ({questions.Count} câu)";
 
+            // Load lại danh sách
+            var cauHois = _cauHoiRepo
+                .GetAllIncluding(c => c.LuaChons)
+                .OrderBy(c => c.SoCauHoi)
+                .ToList();
+
+            ViewBag.CauHois = cauHois;
+
             return View("Upload");
         }
 
+      
+        [HttpGet("Edit/{id}")]
+        public IActionResult Edit(int id)
+        {
+            var cauHoi = _cauHoiRepo
+                .GetAllIncluding(c => c.LuaChons)
+                .FirstOrDefault(c => c.Id == id);
+
+            if (cauHoi == null)
+            {
+                return Content("Không tìm thấy câu hỏi!");
+            }
+
+            return View(cauHoi);
+        }
+
+        [HttpPost("Edit")]
+[ValidateAntiForgeryToken]
+public IActionResult Edit(CauHoi model)
+{
+    var cauHoi = _cauHoiRepo
+        .GetAllIncluding(c => c.LuaChons)
+        .FirstOrDefault(c => c.Id == model.Id);
+
+    if (cauHoi != null)
+    {
+        
+        cauHoi.NoiDungCauHoi = model.NoiDungCauHoi;
+
+        
+        var dapAnDungId = Request.Form["DapAnDung"];
+
        
+        foreach (var lc in cauHoi.LuaChons)
+        {
+            var key = "NoiDung_" + lc.Id;
+
+            if (Request.Form.ContainsKey(key))
+            {
+                lc.NoiDung = Request.Form[key];
+            }
+
+            lc.LaDapAnDung = (lc.Id.ToString() == dapAnDungId);
+        }
+
+        
+        CurrentUnitOfWork.SaveChanges();
+    }
+
+    return RedirectToAction("Upload");
+}
+
+        
+        [HttpGet("Delete/{id}")]
+        public IActionResult Delete(int id)
+        {
+            var cauHoi = _cauHoiRepo.FirstOrDefault(id);
+
+            if (cauHoi != null)
+            {
+                _cauHoiRepo.Delete(cauHoi);
+            }
+
+            return RedirectToAction("Upload");
+        }
+
+      
         [HttpGet("Thi/{id}")]
         public IActionResult Thi(int id)
         {
-            var phanThi = _phanThiRepo.GetAllIncluding(p => p.CauHois)
+            var phanThi = _phanThiRepo
+                .GetAllIncluding(p => p.CauHois)
                 .FirstOrDefault(p => p.DeThiId == id);
 
             if (phanThi == null)
@@ -128,34 +212,47 @@ namespace Nhom10_HoDuongTien.Web.Mvc.Controllers
                 return Content("Không tìm thấy đề thi!");
             }
 
-            var cauHois = _cauHoiRepo.GetAllIncluding(c => c.LuaChons)
+            var cauHois = _cauHoiRepo
+                .GetAllIncluding(c => c.LuaChons)
                 .Where(c => c.PhanThiId == phanThi.Id)
+                .OrderBy(c => c.SoCauHoi)
                 .ToList();
 
             ViewBag.CauHois = cauHois;
-
+            ViewBag.DeThiId = id;
             return View();
         }
 
+        
         [HttpPost("NopBai")]
-        public IActionResult NopBai()
+        [ValidateAntiForgeryToken]
+        public IActionResult NopBai(int deThiId)
         {
             int score = 0;
+            int total = 0;
 
             foreach (var key in Request.Form.Keys)
             {
-                var luaChonId = int.Parse(Request.Form[key]);
+                if (!key.StartsWith("cau_")) continue;
 
-                var lc = _luaChonRepo.FirstOrDefault(luaChonId);
+                total++;
 
-                if (lc != null && lc.LaDapAnDung)
+                var value = Request.Form[key];
+
+                if (int.TryParse(value, out int luaChonId))
                 {
-                    score++;
+                    var lc = _luaChonRepo.FirstOrDefault(luaChonId);
+
+                    if (lc != null && lc.LaDapAnDung)
+                    {
+                        score++;
+                    }
                 }
             }
 
             ViewBag.Score = score;
-
+            ViewBag.Total = total;
+            ViewBag.DeThiId = deThiId;
             return View("KetQua");
         }
     }

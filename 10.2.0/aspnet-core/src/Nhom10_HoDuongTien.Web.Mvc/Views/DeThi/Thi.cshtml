@@ -1,29 +1,145 @@
 @{
-    ViewBag.Title = "Làm bài thi";
-    var cauHois = ViewBag.CauHois as List<Nhom10_HoDuongTien.Core.Entities.Toeic.CauHoi>;
+    Layout = null;
 }
 
-<h2>Làm bài thi</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Làm bài thi</title>
 
-<form method="post" asp-action="NopBai">
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            margin: 0;
+        }
 
-    @foreach (var q in cauHois)
-    {
-        <div style="margin-bottom:20px;">
-            <p><strong>Câu @q.SoCauHoi:</strong> @q.NoiDungCauHoi</p>
+        .header {
+            background: linear-gradient(90deg, #5f2eea, #7b61ff);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+        }
 
-            @foreach (var lc in q.LuaChons)
-            {
-                <div>
-                    <input type="radio" name="cau_@q.Id" value="@lc.Id" />
-                    @lc.Nhan. @lc.NoiDung
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        #timer {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            background: #f9f9ff;
+        }
+
+        .card.active {
+            border: 2px solid #7b61ff;
+            background: #f1efff;
+        }
+
+        .answers div {
+            margin-top: 5px;
+        }
+
+        .submit-box {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            background: #7b61ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div id="timer">⏳ 60:00</div>
+</div>
+
+<div class="container">
+
+    <form method="post" action="/DeThi/NopBai">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="deThiId" value="@ViewBag.DeThiId" />
+        @foreach(var q in ViewBag.CauHois)
+        {
+            <div class="card question">
+                <b>Câu @q.SoCauHoi:</b> @q.NoiDungCauHoi
+
+                <div class="answers">
+                    @foreach(var lc in q.LuaChons)
+                    {
+                        <div>
+                            <input type="radio"
+                                   name="cau_@q.Id"
+                                   value="@lc.Id"
+                                   onchange="highlight(this)" />
+
+                            @lc.Nhan. @lc.NoiDung
+                        </div>
+                    }
                 </div>
-            }
+            </div>
+        }
 
-            <br />
+        <div class="submit-box">
+            <button class="btn">Nộp bài</button>
         </div>
+
+    </form>
+
+</div>
+
+<script>
+    // TIMER
+    var time = 60 * 60;
+
+    var timer = setInterval(function () {
+        var m = Math.floor(time / 60);
+        var s = time % 60;
+
+        document.getElementById("timer").innerHTML =
+            "⏳ " + m + ":" + (s < 10 ? "0" : "") + s;
+
+        time--;
+
+        if (time < 0) {
+            clearInterval(timer);
+            alert("Hết giờ!");
+            document.forms[0].submit();
+        }
+    }, 1000);
+
+    // Highlight khi chọn đáp án
+    function highlight(input) {
+        document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+        input.closest(".card").classList.add("active");
     }
+</script>
 
-    <button type="submit">Nộp bài</button>
-
-</form>
+</body>
+</html>

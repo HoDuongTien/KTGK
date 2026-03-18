@@ -8,70 +8,129 @@
     <meta charset="utf-8" />
     <title>Upload đề thi</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
     <style>
         body {
-            background-color: #f5f7fa;
+            font-family: Arial;
+            background: #eef2f7;
+            padding: 40px;
         }
 
-        .upload-card {
-            max-width: 500px;
-            margin: 80px auto;
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
             padding: 25px;
             border-radius: 12px;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .upload-title {
-            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
 
-        .result-box {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f1f1f1;
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 10px 15px;
             border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        /* ===== Question List ===== */
+        .question {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        .question:hover {
+            background: #f9fafb;
+        }
+
+        .question-content {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .question b {
+            color: #4f46e5;
+        }
+
+        /* ===== Edit Button ===== */
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: fit-content;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
 
-<div class="upload-card">
+<div class="container">
 
-    <h4 class="upload-title text-center">Upload đề thi từ Word</h4>
+    <!-- Upload -->
+    <div class="card">
+        <h2>📤 Upload đề thi</h2>
 
-    <form asp-controller="DeThi" asp-action="UploadWord" method="post" enctype="multipart/form-data">
+        <form asp-action="UploadWord" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" />
+            <br />
+            <button class="btn btn-primary">Upload</button>
+        </form>
 
-        <div class="mb-3">
-            <input class="form-control" type="file" name="file" accept=".docx" required />
-        </div>
+        <p style="color:green">@ViewBag.Message</p>
+    </div>
 
-        <div class="d-grid">
-            <button type="submit" class="btn btn-primary">Upload</button>
-        </div>
+    <!-- Question List -->
+    <div class="card">
+        <h2>📋 Danh sách câu hỏi</h2>
 
-    </form>
+        @if(ViewBag.CauHois != null)
+        {
+            foreach(var q in ViewBag.CauHois)
+            {
+                <div class="question">
+                    
+                    <div class="question-content">
+                        <b>Câu @q.SoCauHoi:</b> @q.NoiDungCauHoi
+                    </div>
 
-    @if (ViewBag.Message != null)
-    {
-        <div class="alert alert-success mt-3">
-            @ViewBag.Message
-        </div>
-    }
+                    <a href="/DeThi/Edit/@q.Id" class="btn-edit">
+                        ✏️ Sửa
+                    </a>
 
-    @if (ViewBag.Content != null)
-    {
-        <div class="result-box">
-            <strong>Nội dung file Word:</strong>
-            <pre>@ViewBag.Content</pre>
-        </div>
-    }
+                </div>
+            }
+        }
+    </div>
 
 </div>
 
